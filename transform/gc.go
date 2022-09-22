@@ -18,7 +18,7 @@ func MakeGCStackSlots(mod llvm.Module) bool {
 		stackChainStart := mod.NamedGlobal("runtime.stackChainStart")
 		if !stackChainStart.IsNil() {
 			stackChainStart.SetLinkage(llvm.InternalLinkage)
-			stackChainStart.SetInitializer(llvm.ConstNull(stackChainStart.Type().ElementType()))
+			stackChainStart.SetInitializer(llvm.ConstNull(stackChainStart.GlobalValueType()))
 			stackChainStart.SetGlobalConstant(true)
 		}
 		return false
@@ -96,7 +96,7 @@ func MakeGCStackSlots(mod llvm.Module) bool {
 		return false
 	}
 	stackChainStart.SetLinkage(llvm.InternalLinkage)
-	stackChainStartType := stackChainStart.Type().ElementType()
+	stackChainStartType := stackChainStart.GlobalValueType()
 	stackChainStart.SetInitializer(llvm.ConstNull(stackChainStartType))
 
 	// Iterate until runtime.trackPointer has no uses left.
@@ -190,7 +190,7 @@ func MakeGCStackSlots(mod llvm.Module) bool {
 			}
 
 			if !ptr.IsAAllocaInst().IsNil() {
-				if typeHasPointers(ptr.Type().ElementType()) {
+				if typeHasPointers(ptr.AllocatedType()) {
 					allocas = append(allocas, ptr)
 				}
 			} else {
@@ -209,7 +209,7 @@ func MakeGCStackSlots(mod llvm.Module) bool {
 			uintptrType,         // Number of elements in this frame.
 		}
 		for _, alloca := range allocas {
-			fields = append(fields, alloca.Type().ElementType())
+			fields = append(fields, alloca.AllocatedType())
 		}
 		for _, ptr := range pointers {
 			fields = append(fields, ptr.Type())
